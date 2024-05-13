@@ -1,0 +1,26 @@
+{
+  "canisters": {
+    "homevestors_dao_backend": {
+      "main": "src/homevestors_dao_backend/main.mo",
+      "type": "motoko"
+    },
+    "homevestors_dao_frontend": {
+      "dependencies": [
+        "homevestors_dao_backend"
+      ],
+      "source": [
+        "src/homevestors_dao_frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "homevestors_dao_frontend"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
