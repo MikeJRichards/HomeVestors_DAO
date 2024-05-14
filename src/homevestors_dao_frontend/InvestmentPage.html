@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <link rel="stylesheet" href="./src/index.scss">
+  <link rel="stylesheet" href="./src/bootstrap.min.scss">
+</head>
+
+<body>
+  <section id="nav">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">Homevestors DAO</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNavAltMarkup">
+          <div class="navbar-nav">
+            <a class="nav-link active" aria-current="page" href="#">About Us</a>
+            <a class="nav-link" href="./marketplace.html">Marketplace</a>
+            <a class="nav-link" href="#">Whitepaper</a>
+            <a class="nav-link" href="#" tabindex="-1" aria-disabled="true">Login</a>
+          </div>
+        </div>
+      </div>
+    </nav>  </section>
+    <div class="container vh-100">
+      <div class="row">
+        <div id="carouselHero" class="col-8 vh-100">
+          
+          <div id="carouselExampleControls" class="carousel slide w-100" data-bs-ride="carousel">
+            <div class="carousel-inner">
+              <div class="carousel-item active">
+                <img src="./assets/nhouse.jpg" class="d-block w-100" alt="...">
+              </div>
+            <div class="carousel-item">
+              <img src="./assets/nhouse.jpg" class="d-block w-100" alt="...">
+            </div>
+            <div class="carousel-item">
+              <img src="./assets/nhouse.jpg" class="d-block w-100" alt="...">
+            </div>
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        </div>
+      </div>
+      <div id="sideImages" class="col-4 vh-75" >
+        <img class="h-50" src="./assets/nhouse.jpg" alt="">
+        <img class="h-50" src="./assets/nhouse.jpg" alt="">
+      </div>
+      
+    </div>
+
+    </div>
+
+    <div class ="containter">
+      <div class="row">
+        <div class="col-9">
+          <h1>18 Dundee Street, Stoke on Trent, ST3 2RD</h1>
+          <h3>Location: Stoke On Trent</h3>
+          <h3>2 bedrooms | 1 bathroom | 80m<sup>2</sup> </h3>
+          <h3>Terraced House</h3>
+          <div class="row">
+            <div class="col-2 border border-secondary mx-auto">
+              <h6>Purchase Price</h6>
+              <p>$93,000</p>
+            </div>
+            <div class="col-2 border border-secondary mx-auto">
+              <h6>Gross Yeild</h6>
+              <p>10%</p>
+            </div>
+            <div class="col-2 border border-secondary mx-auto">
+              <h6>Min. Investment</h6>
+              <p>$30,000</p>
+            </div>
+            <div class="col-2 border border-secondary mx-auto">
+              <h6>Projected Rent</h6>
+              <p>$800</p>
+            </div>
+            <div class="col-2 border border-secondary mx-auto">
+              <h6>Year Built</h6>
+              <p>1990</p>
+            </div>
+          </div>
+        </div>
+        <div id="investmentBox" class="col-3 d-flex flex-column justify-content-center">
+            <h1 class="text-white display-1">Open</h1>
+            <h1 class="text-white">Invested</h1>
+            <p class="text-white">2000 ICP</p>
+            <div class="progress w-100 mx-auto">
+              <div class="progress-bar" role="progressbar" style="width: 66%;" aria-valuenow="2000" aria-valuemin="0" aria-valuemax="3000">66%</div>
+            </div>
+            <button type="button" class="btn btn-secondary w-50 mx-auto my-3" data-bs-toggle="modal" data-bs-target="#exampleModal">
+              Invest
+            </button>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="container">
+      <ul class="nav nav-pills  justify-content-center">
+        <!-- add data-toggle attribute to the anchors -->
+        <li class="active nav-item"><a class="nav-link active"  aria-current="page" data-bs-toggle="tab" href="#home">Details</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#menu1">Financials</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#menu2">The Market</a></li>
+      </ul>
+        <div class="tab-content">
+        <div id="home" class="tab-pane fade in show active">
+          <div class="container">
+            <div class="row">
+              <div class="col-4">
+                <h5>Last Renovation</h5>
+                <p>2021</p>
+                <h5>Year Built</h5>
+                <p>1910</p>
+                <h5>Square Footage</h5>
+                <p>80M<sup>2</sup></p>
+                <h5>Flood Zone</h5>
+                <p>No</p>
+              </div>
+              <div class="col-4">
+                <h5>Bedrooms</h5>
+                <p>2</p>
+                <h5>Occupied</h5>
+                <p>Yes</p>
+                <h5>Bathrooms</h5>
+                <p>1</p>
+                <h5>Monthly Rent</h5>
+                <p>$770</p>
+              </div>
+              <div class="col-4">
+                <h5>Crime Score</h5>
+                <p>N/a</p>
+                <h5>School Score</h5>
+                <p>Good</p>
+                <h5>Affordabiltiy</h5>
+                <p>100</p>
+                <h5>Price per square foot</h5>
+                <p>number</p>
+              </div>
+            </div>
+            <div class="row">
+              <p>"Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?"</p>
+            </div>
+        </div>
+        </div>
+        <div id="menu1" class="tab-pane fade">
+          <div class="container">
+            <H1>Property Acquisition Financials</H1>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">House Deposit</h6>
+              <p class="justify-content-end">$23,250</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Stamp Duty</h6>
+              <p class="justify-content-end">$2,790</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Mortgage Arrangement Fee (approximately)</h6>
+              <p class="justify-content-end">$2,000</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Platform Fee</h6>
+              <p  class="justify-content-end">Waived</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Initial Treasury</h6>
+              <p  class="justify-content-end">$4,650</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Total Invested</h6>
+              <p class="justify-content-end">$32,690</p>
+            </div>
+            <div class="d-flex justify-content-between mb-0 pb-0" style="height: 20px;">
+              <h6 class="justify-content-start mb-0 pb-0" style="height: 1px;">Airdropped HVD tokens to stake</h6>
+              <p  class="justify-content-end">25,000,000</p>
+            </div>
+            <p>Represents approximately 5% of total supply of  Homevestor Dao (HVD) tokens</p>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Once NFT sale complete, net assets value</h6>
+              <p  class="justify-content-end">$37,340</p>
+            </div>
+            <hr>
+            <H1>Income</H1>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Montly Rent</h6>
+              <p  class="justify-content-end">$770</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Initial estimate of monthly Interest from staked HVD tokens</h6>
+              <p  class="justify-content-end">625,000 HVD tokens</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Total Monthly Income</h6>
+              <h6  class="justify-content-end">$770 + HVD interest (which increases)</h6>
+            </div>
+            <hr>
+            <H1>Expenses</H1>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Anticipated Mortgage Interest Rate</h6>
+              <p  class="justify-content-end">4.5%</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Anticipated Monthly Mortgage Cost</h6>
+              <p  class="justify-content-end">$300</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Maintenance Monthly Budget</h6>
+              <p  class="justify-content-end">$100</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Management Monthly fee (5% of rent)</h6>
+              <p  class="justify-content-end">$35</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Total Expenses</h6>
+              <h6  class="justify-content-end">$435</h6>
+            </div>
+            <hr>
+            <h1>Net position</h1>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Net monthly profit</h6>
+              <p  class="justify-content-end">$335 + HVD interest</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Annual Net Return</h6>
+              <p  class="justify-content-end">$4,020 + HVD token interest</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Total Invested</h6>
+              <p class="justify-content-end">$32,690</p>
+            </div>
+            <div class="d-flex justify-content-between">
+              <h6 class="justify-content-start">Net Yeild</h6>
+              <h6  class="justify-content-end">12.3% + HVD staked Interest</h6>
+            </div>
+          </div>
+        </div>
+        <div id="menu2" class="tab-pane fade">
+          <h3>Market</h3>
+          <p>Some content in menu 2.</p>
+        </div>
+      </div>
+  </div>
+    <ul class="nav nav-pills justify-content-center">
+      <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="#">Details</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Financials</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">The Market</a>
+      </li>
+    </ul>
+
+   
+
+    
+ 
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        ...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+
+    <script src="./src/bootstrap.bundle.min.js"></script>
+  </body>
+
+</html>

@@ -1,37 +1,121 @@
-body {
-  font-family: sans-serif;
-  font-size: 1.5rem;
+#Heading{
+ color: black;
 }
 
-img {
-  max-width: 50vw;
-  max-height: 25vw;
-  display: block;
-  margin: auto;
+.about{
+  color: black;
 }
 
-form {
+#banner {
+  background-image: url(./../assets/nhouse.jpg);
+  background-size:cover;
+  background-position: center;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   justify-content: center;
-  gap: 0.5em;
-  flex-flow: row wrap;
-  max-width: 40vw;
-  margin: auto;
-  align-items: baseline;
+  align-items: center;
+}
+#banner-text-area{
+  background-color: grey;
+  width: fit-content;
+  height: fit-content;
+
 }
 
-button[type="submit"] {
-  padding: 5px 20px;
-  margin: 10px auto;
-  float: right;
-}
-
-#greeting {
-  margin: 10px auto;
-  padding: 10px 60px;
-  border: 1px solid #222;
-}
-
-#greeting:empty {
+.mob {
   display: none;
 }
+@media screen and (max-width: 992px) {
+  .why{
+    width:100% !important;
+  }
+  #detail{
+    width: 100% !important;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  #benefits {
+    width:100% !important;
+  }
+  .icon {
+    position: relative !important;
+  }
+  .override {
+    display: none !important;
+    position: static !important;
+  }
+
+  .mob {
+    display: block;
+  }
+}
+
+
+#border{
+  width: 100%;
+  background-color: grey;
+}
+#inner{
+  background-color: white;
+  padding:0px;
+}
+#carouselHero .carousel-item img {
+  object-fit: cover;
+  height:90vh;
+  object-position: center;
+  overflow: hidden;
+}
+
+#sideImages {
+  height: 90vh;
+  object-fit: cover;
+  object-position: center;
+  overflow: hidden;
+}
+
+#investmentBox {
+  background-color: black;
+  padding-right: 3rem;
+}
+
+#first, #third {
+  margin-left: 25%;
+  width: 450px;
+}
+
+#second, #fourth {
+  margin-left: 50%;
+  width: 450px;
+}
+
+.icon {
+  width: 80px !important;
+  height: 50px !important;
+}
+
+@media screen and (max-width: 992px) {
+  #first, #third {
+    margin: auto !important;
+    width: 100%;
+  }
+  
+  #second, #fourth {
+    margin: auto !important;
+    width: 100%;
+  }
+}
+
+.text-align-center {
+  text-align: center;
+}
+
+.circles {
+  border-radius: 50%;
+  height:50px !important;
+  width:50px !important;
+}
+
+
+
