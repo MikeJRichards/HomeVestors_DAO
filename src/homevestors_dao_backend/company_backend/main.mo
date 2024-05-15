@@ -250,6 +250,10 @@ actor{
         };
     };
 
+    public func getCompanyOnly (companyId : Nat): async  ? Company {
+       return companies.get(companyId);
+    };
+
     public func getCompanyInitialAssets (companyId : Nat): async Result<InitialAssets,Text> {
         switch(companies.get(companyId)){
             case(null){
@@ -646,6 +650,28 @@ actor{
                 };
                 companies.put(companyId, companyNew);
                 return #ok();
+            };
+        };
+    };
+
+    public func getDaoCanisterId (companyId : Nat): async Result<Principal,Text>{
+        switch(companies.get(companyId)){
+            case(null){
+                return #err("No company with that Id");
+            };
+            case (? company){
+                return #ok(company.dao.daoCanister);
+            };
+        };
+    };
+
+    public func getAssetCanisterId (companyId : Nat): async Result<Principal,Text>{
+        switch(companies.get(companyId)){
+            case(null){
+                return #err("No company with that Id");
+            };
+            case (? company){
+                return #ok(company.dao.assetCanister);
             };
         };
     };
