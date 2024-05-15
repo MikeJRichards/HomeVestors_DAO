@@ -26,10 +26,10 @@ actor {
     let proposals = HashMap.HashMap<Nat, Proposal>(0, Nat.equal, Hash.hash);
     let members = HashMap.HashMap<Principal, Nat>(0, Principal.equal, Principal.hash);
    
-func _createProposal (caller : Principal, propertyId : Principal, category : ProposalCategory, content : ProposalContent, link : ? Text): Proposal {
+func _createProposal (caller : Principal, companyId : Nat, category : ProposalCategory, content : ProposalContent, link : ? Text): Proposal {
   let newProposal : Proposal = {
     id = proposalId;
-    propertyId;
+    companyId;
     creator = caller;
     category;
     content;
@@ -44,16 +44,16 @@ func _createProposal (caller : Principal, propertyId : Principal, category : Pro
 };
 
 
-public shared ({ caller }) func createProposal(propertyId : Principal, category : ProposalCategory, content : ProposalContent, link : ? Text): async Result<(), Text> {
-  let newProposal = _createProposal(caller : Principal, propertyId : Principal, category:ProposalCategory, content : ProposalContent, link: ? Text);
+public shared ({ caller }) func createProposal(companyId : Nat, category : ProposalCategory, content : ProposalContent, link : ? Text): async Result<(), Text> {
+  let newProposal = _createProposal(caller : Principal, companyId : Nat, category:ProposalCategory, content : ProposalContent, link: ? Text);
   proposals.put(proposalId, newProposal);
   proposalId += 1;
   return #ok();
 };
 
 
-public shared func _createInvoiceProposal(caller : Principal, propertyId : Principal, category : ProposalCategory, content : ProposalContent, link : ? Text): async (){
-  let newProposal = _createProposal(caller : Principal, propertyId : Principal, category:ProposalCategory, content : ProposalContent, link: ? Text);
+public shared func _createInvoiceProposal(caller : Principal, companyId : Nat, category : ProposalCategory, content : ProposalContent, link : ? Text): async (){
+  let newProposal = _createProposal(caller : Principal, companyId : Nat, category:ProposalCategory, content : ProposalContent, link: ? Text);
   proposals.put(proposalId, newProposal);
   proposalId += 1;
   return;
@@ -121,7 +121,7 @@ public shared ({ caller }) func vote (proposalId : Nat, yesOrNo : Bool): async R
       let newVotes = Buffer.toArray<ProposalVotes>(buffer);
       let updateProposal : Proposal = {
         id = proposal.id;
-        propertyId = proposal.propertyId;
+        companyId = proposal.companyId;
         creator = proposal.creator;
         category = proposal.category; //this needs to be changed if approved from score
         content = proposal.content; 

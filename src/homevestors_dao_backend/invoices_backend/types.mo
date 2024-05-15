@@ -12,6 +12,7 @@ module {
 
     public type Invoice = {
       invoiceId : Nat;
+      companyId : Nat;
       createdBy : Principal;
       canisterId : Principal;
       name : Text;
@@ -21,17 +22,15 @@ module {
       category: InvoiceCategory;
       cashflow: InvoiceCashflow;
      };
-
-
+     
     public type InvoiceCurrency = {
-    #Ckusdc;
-    #Hvd;
+    #CKUSDC;
+    #HVD;
     };
-
 
   public type InvoiceRecurring ={
     recurring: Bool;
-    days: Nat;
+    frequency: RecurringFrequency;
     lastPaid : Time.Time;
     endDate: Time.Time;
     total: Nat;
@@ -39,6 +38,12 @@ module {
     allPayments : [Nat];
   };
 
+  public type RecurringFrequency = {
+    #Weekly;
+    #Monthly; 
+    #Annually; 
+    #Other
+  };
 
   public type InvoiceContent = {
     description : Text;
@@ -47,7 +52,6 @@ module {
     paymentDate : Time.Time;
     recurring : ? InvoiceRecurring;  
   };
-
 
 public type InvoiceStatus = {
   #Open;
@@ -58,31 +62,30 @@ public type InvoiceStatus = {
   #Recurring;
 };
 
-
 public type InvoiceCategory = {
   #Mortgage;
   #Management;
-  #Maintenance;
+  #MaintenanceTaxExempt;
+  #MaintenanceNonTaxExempt;
   #Insurance;
   #Tax;
   #StampDuty;
   #Legals;
   #Rent;
-  #Defi;
+  #CashInHVD;
+  #LiquidHVD;
   #Investment;
   #Dividends;
 };
-
 
 public type InvoiceCashflow = {
   #Income;
   #Expense;
 };
 
-
 public type InvoiceApproval = {
   proposalId : Nat64;
   dateAccepted: Time.Time;
   dateCreated : Time.Time;
 };
-}
+};

@@ -12,7 +12,7 @@ type Invoice = Types.Invoice;
 
 public type Proposal = {
   id : Nat;
-  propertyId : Principal; //Of canister
+  companyId : Nat; //Of canister
   creator: Principal;
   category: ProposalCategory;
   content : ProposalContent;

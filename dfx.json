@@ -12,6 +12,10 @@
       "main": "src/homevestors_dao_backend/invoices_backend/main.mo",
       "type": "motoko"
     },
+    "invoicesInfo_backend": {
+      "main": "src/homevestors_dao_backend/invoicesInfo_backend/main.mo",
+      "type": "motoko"
+    },
     "proposals_backend": {
       "main": "src/homevestors_dao_backend/proposals_backend/main.mo",
       "type": "motoko"
