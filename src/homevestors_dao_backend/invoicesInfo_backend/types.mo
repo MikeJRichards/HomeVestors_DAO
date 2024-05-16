@@ -44,13 +44,13 @@ module {
     };
 
     public type InvoicesPaidThisTaxYear = {
-     annualIncomeRent: Int;
-     annualIncomeSellingHVD: Int;
-     annualMaintenanceTaxExempt : Int;
-     annualMaintenanceTaxNonExempt : Int; 
-     annualManagement : Int;
-     annualMortgage : Int; 
-     annualOther : Int;
+     annualIncomeRent: Float;
+     annualIncomeSellingHVD: Float;
+     annualMaintenanceTaxExempt : Float;
+     annualMaintenanceTaxNonExempt : Float; 
+     annualManagement : Float;
+     annualMortgage : Float; 
+     annualOther : Float;
     };   
     
     //consider renaming maintenance as allowableExpense

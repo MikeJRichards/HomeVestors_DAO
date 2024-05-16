@@ -28,23 +28,6 @@ module {
     #HVD;
     };
 
-  public type InvoiceRecurring ={
-    recurring: Bool;
-    frequency: RecurringFrequency;
-    lastPaid : Time.Time;
-    endDate: Time.Time;
-    total: Nat;
-    totalPayments : Nat;
-    allPayments : [Nat];
-  };
-
-  public type RecurringFrequency = {
-    #Weekly;
-    #Monthly; 
-    #Annually; 
-    #Other
-  };
-
   public type InvoiceContent = {
     description : Text;
     currency : InvoiceCurrency;
@@ -53,13 +36,39 @@ module {
     recurring : ? InvoiceRecurring;  
   };
 
+  public type InvoiceError = {
+    #ShortDescription;
+    #Amount;
+    #PaymentDate;
+    #EndDate;
+    #Name;
+    #Ok;
+  };
+
+  public type InvoiceRecurring ={
+    recurring: Bool;
+    frequency: InvoiceRecurringFrequency;
+    lastPaid : ? Time.Time;
+    endDate: Time.Time;
+    total: Float;
+    totalPayments : Nat;
+    allPayments : [Invoice];
+  };
+
+  public type InvoiceRecurringFrequency = {
+    #Weekly;
+    #Monthly; 
+    #Annually; 
+    #Other
+  };
+
 public type InvoiceStatus = {
+  #Draft;
   #Open;
   #Approved;
   #Rejected;
   #Paid;
   #Received;
-  #Recurring;
 };
 
 public type InvoiceCategory = {

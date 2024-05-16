@@ -5,9 +5,11 @@ import HashMap "mo:base/HashMap";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
+import Buffer "mo:base/Buffer";
+import { setTimer; recurringTimer } = "mo:base/Timer";
+import Int "mo:base/Int";
 import Types "types";
 import InvoiceTypes "./../invoices_backend/types";
-import Buffer "mo:base/Buffer";
 
 
 actor {
@@ -115,25 +117,25 @@ public func updateAllInvoicesOfStatus (companyId : Nat): async Result<(),Text> {
         let allPropertyInvoicesBuffer = Buffer.fromArray<Invoice>(allPropertyInvoices);
 
         let open = Buffer.mapFilter<Invoice, Invoice>(allPropertyInvoicesBuffer, func (x) { if (x.status == #Open) { ?(x) } else { null }});
-        let openInvoices = Iter.toArray(open.vals());
+        let openInvoices = Buffer.toArray(open);
 
         let approved = Buffer.mapFilter<Invoice, Invoice>(allPropertyInvoicesBuffer, func (x) { if (x.status == #Approved) { ?(x) } else { null }});
-        let approvedInvoices = Iter.toArray(approved.vals());
+        let approvedInvoices = Buffer.toArray(approved);
 
         let rejected = Buffer.mapFilter<Invoice, Invoice>(allPropertyInvoicesBuffer, func (x) { if (x.status == #Rejected) { ?(x) } else { null }});   
-        let rejectedInvoices = Iter.toArray(rejected.vals());
+        let rejectedInvoices = Buffer.toArray(rejected);
 
         let paid = Buffer.mapFilter<Invoice, Invoice>(allPropertyInvoicesBuffer, func (x) { if (x.status == #Paid and x.cashflow == #Expense) { ?(x) } else { null }});
-        let paidInvoices = Iter.toArray(paid.vals());
+        let paidInvoices = Buffer.toArray(paid);
 
         let recieved = Buffer.mapFilter<Invoice, Invoice>(allPropertyInvoicesBuffer, func (x) { if (x.status == #Paid and x.cashflow == #Income) { ?(x) } else { null }});
-        let recievedInvoices = Iter.toArray(recieved.vals());
+        let recievedInvoices = Buffer.toArray(recieved);
 
         let maintenance = Buffer.mapFilter<Invoice, Invoice>(allPropertyInvoicesBuffer, func (x) { if (x.category == #MaintenanceTaxExempt or x.category == #MaintenanceNonTaxExempt) { ?(x) } else { null }});
-        let maintenanceInvoices = Iter.toArray(maintenance.vals());
+        let maintenanceInvoices = Buffer.toArray(maintenance);
 
         let investment = Buffer.mapFilter<Invoice, Invoice>(allPropertyInvoicesBuffer, func (x) { if (x.category == #Investment) { ?(x) } else { null }});
-        let investmentInvoices = Iter.toArray(investment.vals());
+        let investmentInvoices = Buffer.toArray(investment);
 
         let allOfStatus : AllInvoicesOfStatus = {
           openInvoices;
@@ -253,6 +255,85 @@ public func updateInvoiceRecurringSummary (companyId : Nat): async Result<(),Tex
 };
 };
 
+public func updatePaidInvoiceTotals (companyId: Nat, amount : Float, category : InvoiceCategory):async Result<(), Text>{
+  switch(invoicesInfo.get(companyId)){
+    case(null){
+      return #err("There is no company with that Id");
+    };
+    case(? invoiceInfo){
+      var mortgage : Float= 0;
+      var maintenanceTaxExempt : Float = 0;
+      var maintenanceNonTaxExempt : Float = 0;
+      var management : Float= 0;
+      var rentRecieved : Float= 0;
+      var hVDTokensRecieved : Float= 0;
+      var hVDCashInRecieved : Float = 0;
+      var investmentsMade : Float = 0;
+      var dividendsRecieved : Float = 0;
+      var totalTaxPaid : Float = 0; 
+      switch (category){
+        case(#Mortgage){
+            mortgage += amount;
+          };
+          case(#Management){
+            management += amount;
+          };
+          case(#MaintenanceTaxExempt){
+            maintenanceTaxExempt += amount;
+          };
+          case(#MaintenanceNonTaxExempt){
+            maintenanceNonTaxExempt += amount;
+          };
+          case(#Tax){
+            totalTaxPaid += amount;
+          };
+          case(#Rent){
+            rentRecieved += amount;
+          };
+          case(#CashInHVD){
+            hVDCashInRecieved += amount;
+          };
+          case(#LiquidHVD){
+            hVDTokensRecieved += amount;
+          };
+          case(#Investment){
+            investmentsMade += amount;
+          };
+          case(#Dividends){
+            dividendsRecieved += amount;
+          };
+          case(_){
+
+          }
+      };
+      let paymentsToDate : InvoiceTotalsToDate  = {
+        mortgage;
+        maintenanceTaxExempt;
+        maintenanceNonTaxExempt;
+        management;
+        rentRecieved;
+        hVDTokensRecieved;
+        hVDCashInRecieved;
+        investmentsMade;
+        dividendsRecieved;
+        totalTaxPaid;
+      };
+      let newInvoicesInfo : InvoicesInfo = {
+        companyId;
+        allOfStatus = invoiceInfo.allOfStatus;
+        reccurringSummary = invoiceInfo.reccurringSummary;
+        annualCashflow = invoiceInfo.annualCashflow;
+        paymentsToDate;
+        allPropertyInvoices = invoiceInfo.allPropertyInvoices;
+        taxByYear = invoiceInfo.taxByYear;
+      };
+      invoicesInfo.put(companyId, newInvoicesInfo);
+      return #ok();
+
+    }
+  }
+};
+
 public func updateInvoiceTotalsToDate (companyId : Nat):async Result<(),Text>{
   switch(invoicesInfo.get(companyId)){
     case(null){
@@ -334,7 +415,8 @@ public func updateInvoiceTotalsToDate (companyId : Nat):async Result<(),Text>{
   };
 };
 //This function is called everytime an invoice is paid
-public func updateInvoicesPaidThisYear (companyId : Nat, amount:Int, category : InvoiceCategory): async Result<(),Text>{
+public func updateInvoicesPaidThisYear (companyId : Nat, num:Float, category : InvoiceCategory): async Result<(),Text>{
+  let amount = Float.toInt(num);
   switch(invoicesInfo.get(companyId)){
     case(null){
       return #err("There is no company with that id");
@@ -394,47 +476,51 @@ func _calculateTax (invoiceInfo : InvoicesInfo): Int {
   return tax;
 };
 
-public func endOfTaxYear (companyId : Nat, year : Nat): async Result<Int,Text>{
-  switch(invoicesInfo.get(companyId)){
-    case(null){
-      return #err("There is no company with that id");
+public func endOfTaxYear (): async (){
+  for(invoiceInfo in invoicesInfo){
+    let taxPaid = _calculateTax(invoiceInfo); 
+    
+    let invoiceTax : InvoiceTaxByYear = {
+      year = Int.Time.now()/year + 1970;
+      taxPaid; 
+      previousAnnualSummary = invoiceInfo.annualCashflow;
     };
-    case(? invoiceInfo){
-      let taxPaid = _calculateTax(invoiceInfo); 
-      let invoiceTax : InvoiceTaxByYear = {
-        year;
-        taxPaid; 
-        previousAnnualSummary = invoiceInfo.annualCashflow;
-      };
-      let taxByYearBuffer = Buffer.fromArray<InvoiceTaxByYear>(invoiceInfo.taxByYear);
-      taxByYearBuffer.add(invoiceTax);
-      let taxByYear = Buffer.toArray(taxByYearBuffer);
-
-      let resetAnnualCashflow = {
-        annualIncomeRent = 0;
-        annualIncomeSellingHVD = 0;
-        annualMaintenanceTaxExempt = 0; 
-        annualMaintenanceTaxNonExempt = 0;
-        annualManagement = 0;
-        annualMortgage = 0; 
-        annualOther = 0;
-      };
-
-      let newInvoiceInfo : InvoicesInfo = {
-        companyId;
-        allOfStatus = invoiceInfo.allOfStatus;
-        reccurringSummary = invoiceInfo.reccurringSummary;
-        annualCashflow = resetAnnualCashflow;
-        paymentsToDate = invoiceInfo.paymentsToDate;
-        allPropertyInvoices = invoiceInfo.allPropertyInvoices;
-        taxByYear; 
-      };
-
-      invoicesInfo.put(companyId, newInvoiceInfo);
-      return #ok(taxPaid);
+    
+    let taxByYearBuffer = Buffer.fromArray<InvoiceTaxByYear>(invoiceInfo.taxByYear);
+    taxByYearBuffer.add(invoiceTax);
+    let taxByYear = Buffer.toArray(taxByYearBuffer);
+    
+    let resetAnnualCashflow = {
+      annualIncomeRent = 0;
+      annualIncomeSellingHVD = 0;
+      annualMaintenanceTaxExempt = 0; 
+      annualMaintenanceTaxNonExempt = 0;
+      annualManagement = 0;
+      annualMortgage = 0; 
+      annualOther = 0;
     };
+    
+    let newInvoiceInfo : InvoicesInfo = {
+      companyId;
+      allOfStatus = invoiceInfo.allOfStatus;
+      reccurringSummary = invoiceInfo.reccurringSummary;
+      annualCashflow = resetAnnualCashflow;
+      paymentsToDate = invoiceInfo.paymentsToDate;
+      allPropertyInvoices = invoiceInfo.allPropertyInvoices;
+      taxByYear; 
+    };
+    
+    invoicesInfo.put(companyId, newInvoiceInfo);
   };
 };
 
+//This sets a timer that calls the endOfTaxYear function on April the 1st of every year to calculate every companies tax
+let year = 31_536_000; 
+let firstApril2025 = 1_743_465_600;
+ignore setTimer(#seconds (firstApril2025 - Int.abs(Time.now() / 1_000_000_000) % year),  
+ func () : async () {  
+ ignore recurringTimer(#seconds year, endOfTaxYear);  
+ await endOfTaxYear();  
+ });  
 
-}   
+};
