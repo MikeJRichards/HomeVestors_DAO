@@ -20,8 +20,8 @@ module {
     }; 
 
     public type InvoiceTaxByYear = {
-     year : Nat;
-     taxPaid : Int; 
+     year : Int;
+     taxPaid : Float; 
      previousAnnualSummary : InvoicesPaidThisTaxYear;
     };
 

@@ -2,10 +2,11 @@ import Hash "mo:base/Hash";
 import Float "mo:base/Float";
 import Result "mo:base/Result";
 import HashMap "mo:base/HashMap";
-import Iter "mo:base/Iter";
+//import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
+import Time "mo:base/Time";
 import { setTimer; recurringTimer } = "mo:base/Timer";
 import Int "mo:base/Int";
 import Types "types";
@@ -195,11 +196,11 @@ public func updateInvoiceRecurringSummary (companyId : Nat): async Result<(),Tex
               case(#Monthly){
                 monthlyRecurringExpenses += vals.content.amount;
               };
+              case(#BiAnnually){
+                monthlyRecurringExpenses += vals.content.amount/6;
+              };
               case(#Annually){
                 monthlyRecurringExpenses += vals.content.amount/12;
-              };
-              case(#Other){
-                //Not sure what to do with these
               };
             };
           };
@@ -220,12 +221,12 @@ public func updateInvoiceRecurringSummary (companyId : Nat): async Result<(),Tex
               case(#Monthly){
                 monthlyRecurringIncome += vals.content.amount;
               };
+              case(#BiAnnually){
+                monthlyRecurringIncome += vals.content.amount/6;
+              };
               case(#Annually){
                 monthlyRecurringIncome += vals.content.amount/12;
               };
-              case(#Other){
-               //Not sure how to handle this edge case 
-              }
             };
           };
         };  
@@ -415,8 +416,7 @@ public func updateInvoiceTotalsToDate (companyId : Nat):async Result<(),Text>{
   };
 };
 //This function is called everytime an invoice is paid
-public func updateInvoicesPaidThisYear (companyId : Nat, num:Float, category : InvoiceCategory): async Result<(),Text>{
-  let amount = Float.toInt(num);
+public func updateInvoicesPaidThisYear (companyId : Nat, amount : Float, category : InvoiceCategory): async Result<(),Text>{
   switch(invoicesInfo.get(companyId)){
     case(null){
       return #err("There is no company with that id");
@@ -466,7 +466,7 @@ public func updateInvoicesPaidThisYear (companyId : Nat, num:Float, category : I
   };
 };
 
-func _calculateTax (invoiceInfo : InvoicesInfo): Int {
+func _calculateTax (invoiceInfo : InvoicesInfo): Float {
   //FYI haven't included other expenses here expecting them to be neglible but could check
   let annualCashflow = invoiceInfo.annualCashflow; 
   let income = annualCashflow.annualIncomeRent + annualCashflow.annualIncomeSellingHVD;
@@ -476,12 +476,12 @@ func _calculateTax (invoiceInfo : InvoicesInfo): Int {
   return tax;
 };
 
-public func endOfTaxYear (): async (){
-  for(invoiceInfo in invoicesInfo){
+private func endOfTaxYear (): async (){
+  for(invoiceInfo in invoicesInfo.vals()){
     let taxPaid = _calculateTax(invoiceInfo); 
     
     let invoiceTax : InvoiceTaxByYear = {
-      year = Int.Time.now()/year + 1970;
+      year = Time.now()/year + 1970;
       taxPaid; 
       previousAnnualSummary = invoiceInfo.annualCashflow;
     };
@@ -491,17 +491,17 @@ public func endOfTaxYear (): async (){
     let taxByYear = Buffer.toArray(taxByYearBuffer);
     
     let resetAnnualCashflow = {
-      annualIncomeRent = 0;
-      annualIncomeSellingHVD = 0;
-      annualMaintenanceTaxExempt = 0; 
-      annualMaintenanceTaxNonExempt = 0;
-      annualManagement = 0;
-      annualMortgage = 0; 
-      annualOther = 0;
+      annualIncomeRent = 0.00;
+      annualIncomeSellingHVD = 0.00;
+      annualMaintenanceTaxExempt = 0.00; 
+      annualMaintenanceTaxNonExempt = 0.00;
+      annualManagement = 0.00;
+      annualMortgage = 0.00; 
+      annualOther = 0.00;
     };
     
     let newInvoiceInfo : InvoicesInfo = {
-      companyId;
+      companyId = invoiceInfo.companyId;
       allOfStatus = invoiceInfo.allOfStatus;
       reccurringSummary = invoiceInfo.reccurringSummary;
       annualCashflow = resetAnnualCashflow;
@@ -510,7 +510,7 @@ public func endOfTaxYear (): async (){
       taxByYear; 
     };
     
-    invoicesInfo.put(companyId, newInvoiceInfo);
+    invoicesInfo.put(invoiceInfo.companyId, newInvoiceInfo);
   };
 };
 

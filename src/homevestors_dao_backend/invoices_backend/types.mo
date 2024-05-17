@@ -37,7 +37,7 @@ module {
   };
 
   public type InvoiceError = {
-    #ShortDescription;
+    #Description;
     #Amount;
     #PaymentDate;
     #EndDate;
@@ -58,8 +58,8 @@ module {
   public type InvoiceRecurringFrequency = {
     #Weekly;
     #Monthly; 
+    #BiAnnually;
     #Annually; 
-    #Other
   };
 
 public type InvoiceStatus = {
@@ -68,7 +68,7 @@ public type InvoiceStatus = {
   #Approved;
   #Rejected;
   #Paid;
-  #Received;
+  #Recieved;
 };
 
 public type InvoiceCategory = {

@@ -35,12 +35,11 @@ actor {
     
 
     let proposal_backend : actor {
-		_createInvoiceProposal : shared (caller : Principal, propertyId : Principal, category : ProposalCategory, content : ProposalContent, link : ? Text) -> async (); 
+		_createInvoiceProposal : shared (caller : Principal, companyId : Nat, category : ProposalCategory, content : ProposalContent, link : ? Text) -> async (); 
 	} = actor ("bd3sg-teaaa-aaaaa-qaaba-cai"); 
 
   let company_backend : actor {
     getCompanyOnly : shared (companyId : Nat) -> async ? Company;
-    getCompanyDao : shared (companyId : Nat) -> async Result<CompanyDAO, Text>;
   } = actor ("bd3sg-teaaa-aaaaa-qaaba-cai");
 
   let invoiceInfo_backend : actor {
@@ -70,7 +69,7 @@ func _getCashflow (category : InvoiceCategory): InvoiceCashflow {
 //switch statement on whether company exists - if null error otherwise continue
 //Edit -switch statement on invoiceId - if exists call helper function to create invoice and then don't increment id and use id
 //Create - if doesn't exist again call helper function and then add and increment
-func _createDraftInvoice (invoiceId : Nat, companyId : Nat, name : Text, description : Text, currency : InvoiceCurrency, amount : Float, recurring : Bool, frequency : InvoiceRecurringFrequency, endDate : Int, category : InvoiceCategory, createdBy : Principal): async Invoice {
+func _createDraftInvoice (invoiceId : Nat, company : Company, name : Text, description : Text, currency : InvoiceCurrency, amount : Float, recurring : Bool, frequency : InvoiceRecurringFrequency, endDate : Int, category : InvoiceCategory, createdBy : Principal): async Invoice {
   let re : InvoiceRecurring = {
               recurring;
               frequency;
@@ -78,7 +77,7 @@ func _createDraftInvoice (invoiceId : Nat, companyId : Nat, name : Text, descrip
               endDate;
               total = 0;
               totalPayments = 0;
-              allPayments = [0];
+              allPayments = [];
           };
 
           let newInvoiceContent : InvoiceContent = {
@@ -88,13 +87,11 @@ func _createDraftInvoice (invoiceId : Nat, companyId : Nat, name : Text, descrip
             paymentDate = Time.now();
             recurring = switch(recurring){case(true){?re};case(false){null}};
            };
-          let dao = company_backend.getCompanyDao(compnayId);
-          let canisterId = dao.assetCanister;
           let newInvoice : Invoice = {
             invoiceId = invoiceId;
-            companyId;
+            companyId = company.companyId;
             createdBy;
-            canisterId;
+            canisterId = company.dao.assetCanister;
             name;
             content = newInvoiceContent;
             status = #Open;
@@ -113,16 +110,16 @@ func _createDraftInvoice (invoiceId : Nat, companyId : Nat, name : Text, descrip
     case(null){
       return #err("No company exists with that id");
     };
-    case(_){
+    case(? company){
       switch(thisInvoiceId){
         case(null){ //creating an invoice
-          let invoice = _createDraftInvoice(invoiceId, companyId, name, description, currency, amount, recurring, frequency, endDate, category, caller);
+          let invoice = await _createDraftInvoice(invoiceId, company, name, description, currency, amount, recurring, frequency, endDate, category, caller);
           invoices.put(invoiceId, invoice);
           invoiceId += 1;
           return #ok();
         };
         case(? notNullThisInvoiceId){
-          switch(invoices.get(thisInvoiceId)){
+          switch(invoices.get(notNullThisInvoiceId)){
             case(null){ 
               return #err("There is no invoice with that id")
 
@@ -132,7 +129,7 @@ func _createDraftInvoice (invoiceId : Nat, companyId : Nat, name : Text, descrip
                 return #err("You can only edit draft invoices");
               }
               else{
-              let invoice = _createDraftInvoice(invoiceId, companyId, name, description, currency, amount, recurring, frequency, endDate, category, caller);
+              let invoice = await _createDraftInvoice(invoiceId, company, name, description, currency, amount, recurring, frequency, endDate, category, caller);
               invoices.put(invoiceId, invoice);
               return #ok();
               };
@@ -149,7 +146,7 @@ func _createDraftInvoice (invoiceId : Nat, companyId : Nat, name : Text, descrip
 public func getDraftInvoices (): async [Invoice]{
   let allInvoices = Iter.toArray(invoices.vals());
   let allInvoicesBuffer = Buffer.fromArray<Invoice>(allInvoices);
-  let draft = Buffer.mapFilter<Invoice, Invoice>(allPropertyInvoicesBuffer, func (x) { if (x.status == #Draft) { ?(x) } else { null }});
+  let draft = Buffer.mapFilter<Invoice, Invoice>(allInvoicesBuffer, func (x) { if (x.status == #Draft) { ?(x) } else { null }});
   let draftInvoices = Buffer.toArray(draft);
   return draftInvoices;
 };
@@ -166,15 +163,15 @@ public func getDraftInvoice (invoiceId : Nat) : async Result<Invoice,Text>{
   };
 };
 
-public func getDraftInvoicesOfCompany (companyId : Nat): async (){
+public func getDraftInvoicesOfCompany (companyId : Nat): async [Invoice]{
   let allInvoices = Iter.toArray(invoices.vals());
   let allInvoicesBuffer = Buffer.fromArray<Invoice>(allInvoices);
-  let draft = Buffer.mapFilter<Invoice, Invoice>(allPropertyInvoicesBuffer, func (x) { if (x.status == #Draft and x.companyId == companyId) { ?(x) } else { null }});
+  let draft = Buffer.mapFilter<Invoice, Invoice>(allInvoicesBuffer, func (x) { if (x.status == #Draft and x.companyId == companyId) { ?(x) } else { null }});
   let draftInvoices = Buffer.toArray(draft);
   return draftInvoices;
 };
 
-func _invoiceChecks (invoice : Invoice): InvoiceError{
+public func _invoiceChecks (invoice : Invoice): async InvoiceError{
   if(Text.size(invoice.name) < 4){
     return #Name;
   };
@@ -184,25 +181,31 @@ func _invoiceChecks (invoice : Invoice): InvoiceError{
   if(invoice.content.amount <= 0){
     return #Amount
   };
-  if(invoice.content.recurring != null){
-    if(invoice.content.recurring.paymentDate < time.now()){
+  switch(invoice.content.recurring){
+    case(null){
+      return #Ok;
+    };
+    case(? recurring){
+      if(invoice.content.paymentDate < Time.now()){
       return #PaymentDate
     };
-    if(invoice.content.recurring.endDate < invoice.content.recurring.paymentDate){
+    if(recurring.endDate < invoice.content.paymentDate){
       return #EndDate;
     };
+    return #Ok;
+    }
   };
-  return #Ok;
 };
 
-public func openInvoice (invoiceId : Nat) : async (){
+public shared ({caller}) func openInvoice (invoiceId : Nat) : async Result<(), Text>{
   switch(invoices.get(invoiceId)){
     case(null){
      return #err("There is no invoice with that id");
     };
     case(? invoice){
       //At this point include checks
-      if(_invoiceChecks(invoice) == #Ok){
+      switch(await _invoiceChecks(invoice)){
+        case(#Ok){
       let newInvoice = {
         invoiceId;
         companyId = invoice.companyId;
@@ -216,20 +219,27 @@ public func openInvoice (invoiceId : Nat) : async (){
         cashflow = invoice.cashflow; 
       };
 
+
+
       let newProposalContent = {
        invoice = ?newInvoice;
        proposal = null;
       };
-      return #ok(await proposal_backend._createInvoiceProposal(caller, company.dao.daoCanister , #Invoice, newProposalContent, null));//
+      ignore proposal_backend._createInvoiceProposal(caller, invoice.companyId , #Invoice, newProposalContent, null);
+      return #ok();
+        };
+        case(_){
+          return #err("There is a problem with the invoice.");
+        }
+      }
     };
   };
   };
-};
 
 public func getInvoicesOfCompany (companyId : Nat): async [Invoice]{
   let allInvoices = Iter.toArray(invoices.vals());
   let allInvoicesBuffer = Buffer.fromArray<Invoice>(allInvoices);
-  let allInvoicesOfCompanyBuffer = Buffer.mapFilter<Invoice, Invoice>(allPropertyInvoicesBuffer, func (x) { if (x.companyId == companyId) { ?(x) } else { null }});
+  let allInvoicesOfCompanyBuffer = Buffer.mapFilter<Invoice, Invoice>(allInvoicesBuffer, func (x) { if (x.companyId == companyId) { ?(x) } else { null }});
   let allInvoicesOfCompany = Buffer.toArray(allInvoicesOfCompanyBuffer);
   return allInvoicesOfCompany;
 };
@@ -315,60 +325,77 @@ private func collectDueInvoices (): async (){
 
 private func payRecurringInvoice (array : [Invoice]): async (){
   for(invoice in array.vals()){
-    let newInvoice = {
-      invoiceId = invoice.invoiceId;
-      companyId = invoice.companyId; 
-      createdBy = invoice.createdBy;
-      canisterId = invoice.canisterId;
-      name = invoice.name; 
-      content = invoice.content;
-      status = #Paid; 
-      approval = invoice.approval;
-      category = invoice.category;
-      cashflow = invoice.cashflow;
-    };
-    invoices.put(invoice.invoiceId, newInvoice);
-    
-    let currency = invoice.content.currency;
-    let assetCanister = company_backend.getCompanyDAO(invoice.companyId);
-      if(invoice.cashflow == #Income){
-        //call transfer from function and send it to this accounts asset canister principal
-
-      }
-      else{
-        //call transfer from function and send it from this accounts asset canister principal
+    switch(await company_backend.getCompanyOnly(invoice.companyId)){
+      case(null){
+        return;
       };
+      case( ? company){
+      let newInvoice = {
+        invoiceId = invoice.invoiceId;
+        companyId = invoice.companyId; 
+        createdBy = invoice.createdBy;
+        canisterId = invoice.canisterId;
+        name = invoice.name; 
+        content = invoice.content;
+        status = #Paid; 
+        approval = invoice.approval;
+        category = invoice.category;
+        cashflow = invoice.cashflow;
+      };
+      invoices.put(invoice.invoiceId, newInvoice);
 
-    let invoiceId = invoice.invoiceId;
-    let companyId = invoice.companyId;
-    let amount = invoice.content.amount;
-    let category = invoice.category; 
-    let canisterId = invoice.canisterId; 
-    //Call other functions from invoiceInfo
-    invoiceInfo_backend.updateAllInvoicesOfStatus(companyId);
-    invoiceInfo_backend.updateInvoicesPaidThisYear(companyId, amount, category);
-    invoiceInfo_backend.updatePaidInvoiceTotals(companyId, amount, category);
-    recreateRecurringInvoice(invoice)
+      //let currency = invoice.content.currency;
+      //let assetCanister = company.dao.assetCanister;
+        if(invoice.cashflow == #Income){
+          //call transfer from function and send it to this accounts asset canister principal
+
+        }
+        else{
+          //call transfer from function and send it from this accounts asset canister principal
+        };
+
+      let invoiceId = invoice.invoiceId;
+      let companyId = invoice.companyId;
+      let amount = invoice.content.amount;
+      let category = invoice.category; 
+      //let canisterId = invoice.canisterId; 
+      //Call other functions from invoiceInfo
+      ignore invoiceInfo_backend.updateAllInvoicesOfStatus(companyId);
+      ignore invoiceInfo_backend.updateInvoicesPaidThisYear(companyId, amount, category);
+      ignore invoiceInfo_backend.updatePaidInvoiceTotals(companyId, amount, category);
+      switch(invoice.content.recurring){
+        case(null){
+            return;
+        };
+        case(? recurring){
+          await recreateRecurringInvoice(invoice, recurring);
+          return;
+        };
+      }
+    } 
+    }
   };
 };
 
-private func recreateRecurringInvoice (invoice : Invoice): async (){
-  let daysFromNow = switch(invoice.content.recurring){case(#Weekly){7}; case(#Monthly){30}; case(#Annually){365};};
+private func recreateRecurringInvoice (invoice : Invoice, recurring : InvoiceRecurring): async (){
+
+  let daysFromNow = switch(recurring.frequency){case(#Weekly){7}; case(#Monthly){30}; case(#BiAnnually){180}; case(#Annually){365};};
   //need to ensure that additional recurring invoices aren't created after a recurring payment has ended
   //This needs endDate to be set correctly each time in nanoseconds and frequency to be set correctly
-  if(Time.now()+daysFromNow*86400000000000 > invoice.content.recurring.endDate){
+  if(Time.now()+daysFromNow*86400000000000 > recurring.endDate){
     return;
   };
-  let allPaymentsBuffer = Buffer.fromArray(invoice.content.recurring.allPayments);
+  let allPaymentsBuffer = Buffer.fromArray<Invoice>(recurring.allPayments);
   allPaymentsBuffer.add(invoice);
   let allPayments = Buffer.toArray(allPaymentsBuffer);
-  let recurring : InvoiceRecurring = {
-    recurring = invoice.content.recurring.recurring; 
-    frequency = invoice.content.recurring.frequency;
-    lastPaid = Time.now();
-    endDate = invoice.content.recurring.endDate;
-    total = invoice.content.recurring.total + invoice.content.amount; 
-    totalPayments = invoice.content.recurring.totalPayments + 1; 
+
+  let recurringInvoice : InvoiceRecurring = {
+    recurring = recurring.recurring; 
+    frequency = recurring.frequency;
+    lastPaid = ?Time.now();
+    endDate = recurring.endDate;
+    total = recurring.total + invoice.content.amount; 
+    totalPayments = recurring.totalPayments + 1; 
     allPayments;
   };
   
@@ -376,11 +403,11 @@ private func recreateRecurringInvoice (invoice : Invoice): async (){
     description = invoice.content.description;
     currency = invoice.content.currency;
     amount = invoice.content.amount; //This makes the assumption that every requiring invoice is the same amount
-    paymentDate = Time.now() + days * 86400000000000;
-    recurring; 
+    paymentDate = Time.now() + daysFromNow * 86400000000000;
+    recurring = ?recurringInvoice; 
   };
   
-  let recurringInvoice : Invoice = {
+  let newInvoice : Invoice = {
     invoiceId; 
     companyId = invoice.companyId; 
     createdBy = invoice.createdBy;
@@ -392,7 +419,8 @@ private func recreateRecurringInvoice (invoice : Invoice): async (){
     category = invoice.category;
     cashflow = invoice.cashflow;
   };
-  invoices.put(invoiceId, recurringInvoice);
+  
+  invoices.put(invoiceId, newInvoice);
 };
 
 public func paySpecificInvoice (invoiceId : Nat): async Result<Text,Text> {
@@ -401,44 +429,53 @@ public func paySpecificInvoice (invoiceId : Nat): async Result<Text,Text> {
       #err("There is no invoice with that id");
     };
     case(? invoice){
-      if(invoice.status != #Approved){
-        return #err("This invoice has not been approved for payment yet.")
-      };
-      if(invoice.content.recurring != null){
-        return #err("This invoice is recurring and cannot be paid before the payment date!")
-      };
-
-      let newInvoice = {
-        invoiceId   =   invoice.invoiceId;
-        companyId   =   invoice.companyId; 
-        createdBy   =   invoice.createdBy;
-        canisterId  =   invoice.canisterId;
-        name        =   invoice.name; 
-        content     =   invoice.content;
-        status      =   switch(invoice.cashflow){case(#Expense){#Paid}; case(#Income){#Recieved}}; 
-        approval    =   invoice.approval;
-        category    =   invoice.category;
-        cashflow    =   invoice.cashflow;
-      };
-      invoices.put(invoice.invoiceId, newInvoice);
-      let currency = invoice.content.currency;
-      let assetCanister = company_backend.getCompanyDAO(invoice.companyId);
-      if(invoice.cashflow == #Income){
-        //call transfer from function and send it to this accounts asset canister principal
-
-      }
-      else{
-        //call transfer from function and send it from this accounts asset canister principal
-      };
-      let companyId = invoice.companyId;
-      let amount = invoice.content.amount;
-      let category = invoice.category; 
-      let canisterId = invoice.canisterId; 
-      //Call other functions from invoiceInfo
-      invoiceInfo_backend.updateAllInvoicesOfStatus(companyId);
-      invoiceInfo_backend.updateInvoicesPaidThisYear(companyId, amount, category);
-      invoiceInfo_backend.updatePaidInvoiceTotals(companyId, amount, category);
+      switch(await company_backend.getCompanyOnly(invoice.companyId)){
+        case(null){
+          #err("This invoice is not associated with a company and therefore, we cannot pay it")
+        };
+        case(? company){
+          if(invoice.status != #Approved){
+            return #err("This invoice has not been approved for payment yet.")
+          };
+          if(invoice.content.recurring != null){
+            return #err("This invoice is recurring and cannot be paid before the payment date!")
+          };
+    
+          let newInvoice : Invoice = {
+            invoiceId   =   invoice.invoiceId;
+            companyId   =   invoice.companyId; 
+            createdBy   =   invoice.createdBy;
+            canisterId  =   invoice.canisterId;
+            name        =   invoice.name; 
+            content     =   invoice.content;
+            status      =   switch(invoice.cashflow){case(#Expense){#Paid}; case(#Income){#Recieved}}; 
+            approval    =   switch(invoice.approval){case(null){null};case(? approval){?approval}};
+            category    =   invoice.category;
+            cashflow    =   invoice.cashflow;
+          };
+          invoices.put(invoice.invoiceId, newInvoice);
+          //let currency = invoice.content.currency;
+          //let assetCanister = company.dao.assetCanister;
+          if(invoice.cashflow == #Income){
+            //call transfer from function and send it to this accounts asset canister principal
+    
+            }
+          else{
+            //call transfer from function and send it from this accounts asset canister principal
+          };
+          let companyId = invoice.companyId;
+          let amount = invoice.content.amount;
+          let category = invoice.category; 
+          //let canisterId = invoice.canisterId; 
+          //Call other functions from invoiceInfo
+          ignore invoiceInfo_backend.updateAllInvoicesOfStatus(companyId);
+          ignore invoiceInfo_backend.updateInvoicesPaidThisYear(companyId, amount, category);
+          ignore invoiceInfo_backend.updatePaidInvoiceTotals(companyId, amount, category);
+          return #ok("The invoice has been paid.");
     };
+
+        }
+      }
   };
 };
 

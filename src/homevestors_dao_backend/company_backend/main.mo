@@ -146,7 +146,7 @@ actor{
     return companyNFT;
    };
 
-   func _currentAssets (propertyValuation : Float, propertyValuationLow : Float, propertyValuationHigh : Float, companyDAO : CompanyDAO): Assets {
+   func _currentAssets (propertyValuation : Float, propertyValuationLow : Float, propertyValuationHigh : Float): Assets {
     //This function is also incomplete - need to be able to make calls to asset canister to get balances and sns account as well
     let currentAssets : Assets = {
         currentValue = 0;
@@ -198,7 +198,7 @@ actor{
         let property : Property = _createProperty(address, financials, tenants, description, market, titleDeeds, uprn);
         let dao = _createCompanyDAO(daoCanister, assetCanister, snsIdentity, snsAccountPrincipal);
         let nft = _companyNFTs(canisterLgNFT, canisterSmNFT);
-        let currentAssets = _currentAssets(propertyValuation, propertyValuationLow, propertyValuationHigh, dao);
+        let currentAssets = _currentAssets(propertyValuation, propertyValuationLow, propertyValuationHigh);//may want to include dao in this function when I can make balance calls
         let initialAssets = _initialAssets(initialValue, originalTreasury, propertyPurchasePrice, priceHVD);
         
         let company : Company = {
@@ -361,7 +361,7 @@ actor{
                 return #err("There is no company with that id");
             };
             case(? company){
-                let dao = company.dao;
+                //let dao = company.dao;
                 let assets = company.currentAssets;
                 //This will need to be a call to HVD token canister to get balance passing in ledger principal from company info
                 let stakedHVD : Float= 10.0; //This will need to be an intercanister call to sns using principal
