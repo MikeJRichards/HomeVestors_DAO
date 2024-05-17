@@ -317,7 +317,7 @@ public func getRecurringInvoice (invoiceId : Nat): async Result <InvoiceRecurrin
 private func collectDueInvoices (): async (){
   let array = Iter.toArray(invoices.vals());
   let buffer = Buffer.fromArray<Invoice>(array);
-  let recurringInvoices = Buffer.mapFilter<Invoice, Invoice>(buffer, func (x) { if (x.status == #Approved and x.content.recurring != null) { ?(x) } else { null }});
+  let recurringInvoices = Buffer.mapFilter<Invoice, Invoice>(buffer, func (x) { if (x.status == #Approved) { ?(x) } else { null }});
   let toPay = Buffer.mapFilter<Invoice, Invoice>(recurringInvoices, func (x) { if ((x.content.paymentDate - Time.now()) / 86400000000000 < 5) { ?(x) } else { null }});
   let payNowArray = Buffer.toArray(toPay);
   ignore payRecurringInvoice(payNowArray);
