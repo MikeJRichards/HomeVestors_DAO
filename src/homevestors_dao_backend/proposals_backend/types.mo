@@ -20,8 +20,10 @@ public type Proposal = {
   created: Time.Time;
   votes : [ProposalVotes];
   voteScore : Int;
+  voterParticipation : Float;
   status : ProposalStatus;
   executed: ? Int;
+
 };
 
 
@@ -32,6 +34,7 @@ public type ProposalVotes = {
 
 
 public type ProposalStatus = {
+  #Draft;
   #Open;
   #Accepted;
   #Rejected;

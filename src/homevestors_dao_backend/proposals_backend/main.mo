@@ -10,6 +10,7 @@ import Nat "mo:base/Nat";
 import Option "mo:base/Option";
 import Types "types";
 import InvoiceTypes "./../invoices_backend/types";
+import CompanyTypes "./../company_backend/types";
 
 actor {
     type Result <Ok, Err> = Types.Result<Ok,Err>;
@@ -21,11 +22,16 @@ actor {
     type ProposalContent = Types.ProposalContent; 
     type ProposalContents = Types.ProposalContents;
     type Invoice = InvoiceTypes.Invoice; 
+    type Company = CompanyTypes.Company;
 
     var proposalId : Nat = 0;
     let proposals = HashMap.HashMap<Nat, Proposal>(0, Nat.equal, Hash.hash);
     let members = HashMap.HashMap<Principal, Nat>(0, Principal.equal, Principal.hash);
-   
+
+  let proposal_info_backend : actor {
+		updateCompanyProposals : shared (companyId : Nat) -> async (); 
+	} = actor ("bd3sg-teaaa-aaaaa-qaaba-cai"); 
+
 func _createProposal (caller : Principal, companyId : Nat, category : ProposalCategory, content : ProposalContent, link : ? Text): Proposal {
   let newProposal : Proposal = {
     id = proposalId;
@@ -37,6 +43,7 @@ func _createProposal (caller : Principal, companyId : Nat, category : ProposalCa
     created = Time.now();
     votes = [];
     voteScore = 0;
+    voterParticipation = 0.0;
     status = #Open;
     executed = null;
   };
@@ -47,6 +54,7 @@ func _createProposal (caller : Principal, companyId : Nat, category : ProposalCa
 public shared ({ caller }) func createProposal(companyId : Nat, category : ProposalCategory, content : ProposalContent, link : ? Text): async Result<(), Text> {
   let newProposal = _createProposal(caller : Principal, companyId : Nat, category:ProposalCategory, content : ProposalContent, link: ? Text);
   proposals.put(proposalId, newProposal);
+  await proposal_info_backend.updateCompanyProposals(companyId);
   proposalId += 1;
   return #ok();
 };
@@ -55,12 +63,21 @@ public shared ({ caller }) func createProposal(companyId : Nat, category : Propo
 public shared func _createInvoiceProposal(caller : Principal, companyId : Nat, category : ProposalCategory, content : ProposalContent, link : ? Text): async (){
   let newProposal = _createProposal(caller : Principal, companyId : Nat, category:ProposalCategory, content : ProposalContent, link: ? Text);
   proposals.put(proposalId, newProposal);
+  await proposal_info_backend.updateCompanyProposals(companyId);
   proposalId += 1;
   return;
 };
 
 public func getProposals (): async [Proposal]{
   return Iter.toArray(proposals.vals());
+};
+
+public func getCompanyProposals (companyId : Nat): async [Proposal]{
+  let array = Iter.toArray(proposals.vals());
+  let buffer = Buffer.fromArray<Proposal>(array);
+  let companyProposals = Buffer.mapFilter<Proposal, Proposal>(buffer, func (x) { if (x.companyId == companyId) { ?(x) } else { null }});
+  let companyArray = Buffer.toArray<Proposal>(companyProposals);
+  return companyArray;  
 };
 
 public func getInvoiceFromProposal (proposalId : Nat): async Result<Invoice, Text>{
@@ -129,12 +146,15 @@ public shared ({ caller }) func vote (proposalId : Nat, yesOrNo : Bool): async R
         created = proposal.created; 
         votes = newVotes;
         voteScore = getVotes; 
+        voterParticipation = proposal.voterParticipation;
         status = proposal.status;
         executed = proposal.executed; //this needs to be set to the time it was approved if it was
       };
       proposals.put(proposalId, updateProposal);
-      return #ok();
+      await proposal_info_backend.updateCompanyProposals(companyId);
 
+      return #ok();
+      //Once proposal is either accepted or rejected need to calculate voterParticipation
 
     };
   };
